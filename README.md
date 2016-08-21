@@ -6,7 +6,7 @@ It manages starting and stopping of containers, and provides some simple shortcu
 ### Installation
 
 1. `cd ~/projects/in-spiritus`
-1. `npm install --save-dev mlvk/in-spiritus-cli`
+1. `npm install -g mlvk/in-spiritus-cli`
 
 ### Usage
 
