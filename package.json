@@ -1,0 +1,23 @@
+{
+  "name": "is",
+  "bin": "index.js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./node_modules/.bin/babel lib -d . --plugins syntax-async-functions transform-async-to-generator"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^1.1.3",
+    "child-process-promise": "^2.1.3",
+    "commander": "^2.9.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.11.4",
+    "babel-plugin-syntax-async-functions": "^6.13.0",
+    "babel-plugin-transform-async-to-generator": "^6.8.0"
+  }
+}
