@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+
+"use strict";
+
 let containerIsRunning = (() => {
   var _ref = _asyncToGenerator(function* (name) {
     const cmd = yield exec(`docker ps -q -f name=${ name }`);
