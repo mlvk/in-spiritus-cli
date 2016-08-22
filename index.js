@@ -124,6 +124,10 @@ program.command('rails [options...]').description('Run rails commands on the web
   spawnDC(args, 'web');
 });
 
+program.command('test').description('Run test suite').action(options => {
+  spawnDC(['-f', defaultDockerComposeFile, 'exec', 'web', 'rake', 'test'], 'web');
+});
+
 program.on('--help', function () {
   console.log('  Examples:');
   console.log('');
