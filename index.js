@@ -124,7 +124,7 @@ program.command('rails [options...]').description('Run rails commands on the web
   spawnDC(args, 'web');
 });
 
-program.command('test').description('Run test suite').action(options => {
+program.command('test').alias('t').description('Run test suite').action(options => {
   spawnDC(['-f', defaultDockerComposeFile, 'exec', 'web', 'rake', 'test'], 'web');
 });
 
