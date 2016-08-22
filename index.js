@@ -60,7 +60,7 @@ const spawn = require('child_process').spawn;
 const defaultDockerComposeFile = 'docker/docker-compose.yml';
 const noSyncDockerComposeFile = 'docker/docker-compose-no-sync.yml';
 
-program.version('0.0.2').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
+program.version('0.0.3').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
   var _ref4 = _asyncToGenerator(function* (options) {
     let cmd;
     if (options.sync) {
