@@ -56,11 +56,12 @@ const chalk = require('chalk');
 const program = require('commander');
 const exec = require('child-process-promise').exec;
 const spawn = require('child_process').spawn;
+const fp = require('lodash/fp');
 
 const defaultDockerComposeFile = 'docker/docker-compose.yml';
 const noSyncDockerComposeFile = 'docker/docker-compose-no-sync.yml';
 
-program.version('0.0.3').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
+program.version('0.0.4').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
   var _ref4 = _asyncToGenerator(function* (options) {
     let cmd;
     if (options.sync) {
@@ -115,6 +116,11 @@ program.command('reset').description('Reset all data').action(() => {
   spawnDC(['-f', defaultDockerComposeFile, 'exec', 'web', 'rake', 'db:reset'], 'web');
 });
 
+program.command('rails [options...]').description('Run rails commands on the web container. *Note, flags are not allowed. For full use of the rails command, open a shell using is bash').action(options => {
+  const args = fp.flattenDeep([['-f', defaultDockerComposeFile, 'exec', 'web', 'rails'], options]);
+  spawnDC(args, 'web');
+});
+
 program.on('--help', function () {
   console.log('  Examples:');
   console.log('');
@@ -127,6 +133,7 @@ program.on('--help', function () {
   console.log('    $ is c');
   console.log('    $ is reset');
   console.log('    $ is kill');
+  console.log('    $ is rails g model Post title description date:datetime');
   console.log('');
 });
 
