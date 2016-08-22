@@ -10,8 +10,27 @@ let containerIsRunning = (() => {
   };
 })();
 
+let hasDockerComposeFiles = (() => {
+  var _ref2 = _asyncToGenerator(function* () {
+    return yield fsp.exists('docker');
+  });
+
+  return function hasDockerComposeFiles() {
+    return _ref2.apply(this, arguments);
+  };
+})();
+
 let spawnDC = (() => {
-  var _ref2 = _asyncToGenerator(function* (args, container, requireRunning = true) {
+  var _ref3 = _asyncToGenerator(function* (args, container, requireRunning = true) {
+    const isValid = yield hasDockerComposeFiles();
+
+    if (!isValid) {
+      console.log(chalk.red('There are no docker-compose files to run. Are you in the right directory?'));
+      console.log(chalk.red('You must run this from the'), chalk.yellow('in-spiritus'), chalk.red('project root.'));
+      process.exit(1);
+      return;
+    }
+
     const isRunning = yield containerIsRunning(container);
     if (isRunning || !requireRunning) {
       if (isRunning) {
@@ -26,12 +45,13 @@ let spawnDC = (() => {
   });
 
   return function spawnDC(_x2, _x3, _x4) {
-    return _ref2.apply(this, arguments);
+    return _ref3.apply(this, arguments);
   };
 })();
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { return step("next", value); }, function (err) { return step("throw", err); }); } } return step("next"); }); }; }
 
+const fsp = require('fs-promise');
 const chalk = require('chalk');
 const program = require('commander');
 const exec = require('child-process-promise').exec;
@@ -40,8 +60,8 @@ const spawn = require('child_process').spawn;
 const defaultDockerComposeFile = 'docker/docker-compose.yml';
 const noSyncDockerComposeFile = 'docker/docker-compose-no-sync.yml';
 
-program.command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
-  var _ref3 = _asyncToGenerator(function* (options) {
+program.version('0.0.2').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
+  var _ref4 = _asyncToGenerator(function* (options) {
     let cmd;
     if (options.sync) {
       cmd = yield spawnDC(['-f', defaultDockerComposeFile, 'up'], undefined, false);
@@ -62,7 +82,7 @@ program.command('serve').alias('server').alias('s').option('-n, --no-sync', "Don
   });
 
   return function (_x5) {
-    return _ref3.apply(this, arguments);
+    return _ref4.apply(this, arguments);
   };
 })());
 
