@@ -5,8 +5,7 @@ It manages starting and stopping of containers, and provides some simple shortcu
 
 ### Installation
 
-1. `cd ~/projects/in-spiritus`
-1. `npm install -g mlvk/in-spiritus-cli`
+`npm install -g mlvk/in-spiritus-cli`
 
 ### Usage
 
@@ -16,6 +15,8 @@ It manages starting and stopping of containers, and provides some simple shortcu
 1. `is migrate` - Run any pending rails migrations on the web container
 1. `is psql` - Connect to postgres
 1. `is redis` - Connect to redis
+1. `is rails [options]` - Run rails commands
+1. `is rake [options]` - Run rake commands
 
 ### Troubleshooting
 

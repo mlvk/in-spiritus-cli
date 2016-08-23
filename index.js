@@ -99,7 +99,7 @@ program.command('console').alias('c').description('Starts a rails console on the
 }));
 
 program.command('bash').alias('b').description('Starts a bash shell in the container. Defaults to web container.').option('-c, --container <container>', 'The container to connect to.').action(options => {
-  container = options.container || 'web';
+  const container = options.container || 'web';
   spawnDC(['-f', defaultDockerComposeFile, 'exec', container, 'bash'], container);
 });
 
@@ -124,6 +124,11 @@ program.command('rails [options...]').description('Run rails commands on the web
   spawnDC(args, 'web');
 });
 
+program.command('rake [options...]').description('Run rake commands on the web container. *Note, flags are not allowed. For full use of the rails command, open a shell using is bash').action(options => {
+  const args = fp.flattenDeep([['-f', defaultDockerComposeFile, 'exec', 'web', 'rake'], options]);
+  spawnDC(args, 'web');
+});
+
 program.command('test').alias('t').description('Run test suite').action(options => {
   spawnDC(['-f', defaultDockerComposeFile, 'exec', 'web', 'rake', 'test'], 'web');
 });
@@ -141,6 +146,8 @@ program.on('--help', function () {
   console.log('    $ is reset');
   console.log('    $ is kill');
   console.log('    $ is rails g model Post title description date:datetime');
+  console.log('    $ is rake test');
+  console.log('    $ is rake db:rollback');
   console.log('');
 });
 
