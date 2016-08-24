@@ -64,7 +64,7 @@ const fp = require('lodash/fp');
 const defaultDockerComposeFile = 'docker/docker-compose.yml';
 const noSyncDockerComposeFile = 'docker/docker-compose-no-sync.yml';
 
-program.version('0.0.4').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
+program.version('0.0.5').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
   var _ref4 = _asyncToGenerator(function* (options) {
     let cmd;
     if (options.sync) {
@@ -91,7 +91,7 @@ program.version('0.0.4').command('serve').alias('server').alias('s').option('-n,
 })());
 
 program.command('kill').alias('k').description('Kill all containers').action(() => {
-  spawnDC(['-f', defaultDockerComposeFile, 'kill']);
+  spawnDC(['-f', defaultDockerComposeFile, 'kill'], undefined, false);
 });
 
 program.command('console').alias('c').description('Starts a rails console on the web container').action(_asyncToGenerator(function* () {
