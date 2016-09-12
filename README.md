@@ -19,6 +19,7 @@ It manages starting and stopping of containers, and provides some simple shortcu
 1. `is wipe` - Run rake commands
 1. `is rails [options]` - Run rails commands
 1. `is rake [options]` - Run rake commands
+1. `is tail [log]` - Tail a log file with -f, defaults to the development log
 
 ### Troubleshooting
 
