@@ -64,7 +64,7 @@ const fp = require('lodash/fp');
 const defaultDockerComposeFile = 'docker/docker-compose.yml';
 const noSyncDockerComposeFile = 'docker/docker-compose-no-sync.yml';
 
-program.version('0.0.5').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
+program.version('0.0.6').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
   var _ref4 = _asyncToGenerator(function* (options) {
     let cmd;
     if (options.sync) {
@@ -103,6 +103,14 @@ program.command('bash').alias('b').description('Starts a bash shell in the conta
   spawnDC(['-f', defaultDockerComposeFile, 'exec', container, 'bash'], container);
 });
 
+program.command('tail [log]').description('Tail logs. Defaults to web container.').option('-c, --container <container>', 'The container to connect to and tail.').option('-p, --path <path>', 'The path to prepend the file name to tail.').action((log, options) => {
+  const logFile = log || 'development';
+  const container = options.container || 'web';
+  const path = options.path || './log/';
+  const fullPath = options.path || `${ path }${ logFile }.log`;
+  spawnDC(['-f', defaultDockerComposeFile, 'exec', container, 'tail', '-f', fullPath], container);
+});
+
 program.command('psql').description('Starts a psql session on the db contianer').action(() => {
   spawnDC(['-f', defaultDockerComposeFile, 'exec', 'db', 'psql', '-U', 'postgres'], 'db');
 });
@@ -115,8 +123,12 @@ program.command('redis').description('Starts a redis-cli session on the redis co
   spawnDC(['-f', defaultDockerComposeFile, 'exec', 'redis', 'redis-cli'], 'redis');
 });
 
-program.command('reset').description('Reset all data').action(() => {
+program.command('reset').description('Drop db, runs rake db:reset').action(() => {
   spawnDC(['-f', defaultDockerComposeFile, 'exec', 'web', 'rake', 'db:reset'], 'web');
+});
+
+program.command('wipe').description('Wipe all data and reseed without dropping').action(() => {
+  spawnDC(['-f', defaultDockerComposeFile, 'exec', 'web', 'rake', 'clean:all'], 'web');
 });
 
 program.command('rails [options...]').description('Run rails commands on the web container. *Note, flags are not allowed. For full use of the rails command, open a shell using is bash').action(options => {
@@ -148,6 +160,7 @@ program.on('--help', function () {
   console.log('    $ is rails g model Post title description date:datetime');
   console.log('    $ is rake test');
   console.log('    $ is rake db:rollback');
+  console.log('    $ is wipe');
   console.log('');
 });
 
