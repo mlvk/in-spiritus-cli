@@ -2,29 +2,40 @@
 
 "use strict";
 
-let containerIsRunning = (() => {
+let containerIdForNname = (() => {
   var _ref = _asyncToGenerator(function* (name) {
     const cmd = yield exec(`docker ps -q -f name=${ name }`);
-    return cmd.stdout !== '';
+    return cmd.stdout.trim();
   });
 
-  return function containerIsRunning(_x) {
+  return function containerIdForNname(_x) {
     return _ref.apply(this, arguments);
   };
 })();
 
-let hasDockerComposeFiles = (() => {
-  var _ref2 = _asyncToGenerator(function* () {
-    return yield fsp.exists('docker');
+let containerIsRunning = (() => {
+  var _ref2 = _asyncToGenerator(function* (name) {
+    const containerId = yield containerIdForNname(name);
+    return containerId !== '';
   });
 
-  return function hasDockerComposeFiles() {
+  return function containerIsRunning(_x2) {
     return _ref2.apply(this, arguments);
   };
 })();
 
+let hasDockerComposeFiles = (() => {
+  var _ref3 = _asyncToGenerator(function* () {
+    return yield fsp.exists('docker');
+  });
+
+  return function hasDockerComposeFiles() {
+    return _ref3.apply(this, arguments);
+  };
+})();
+
 let spawnDC = (() => {
-  var _ref3 = _asyncToGenerator(function* (args, container, requireRunning = true) {
+  var _ref4 = _asyncToGenerator(function* (args, container, requireRunning = true) {
     const isValid = yield hasDockerComposeFiles();
 
     if (!isValid) {
@@ -47,8 +58,37 @@ let spawnDC = (() => {
     }
   });
 
-  return function spawnDC(_x2, _x3, _x4) {
-    return _ref3.apply(this, arguments);
+  return function spawnDC(_x3, _x4, _x5) {
+    return _ref4.apply(this, arguments);
+  };
+})();
+
+let spawnDocker = (() => {
+  var _ref5 = _asyncToGenerator(function* (args, container, requireRunning = true) {
+    const isValid = yield hasDockerComposeFiles();
+
+    if (!isValid) {
+      console.log(chalk.red('There are no docker-compose files to run. Are you in the right directory?'));
+      console.log(chalk.red('You must run this from the'), chalk.yellow('in-spiritus'), chalk.red('project root.'));
+      process.exit(1);
+      return;
+    }
+
+    const isRunning = yield containerIsRunning(container);
+    if (isRunning || !requireRunning) {
+      if (isRunning) {
+        console.log(chalk.green('Executing on', container));
+      }
+      return spawn('docker', args, { stdio: 'inherit' });
+    } else {
+      console.log(chalk.yellow(`The ${ container } container does not seem to be running. Try to serve and then try again.`), chalk.green('$ is serve'));
+      console.log(chalk.yellow('Run', chalk.green('$ is --help'), 'for more info'));
+      console.log(chalk.yellow('If the containers failed to shut down, use the kill command'), chalk.green('$ is kill'));
+    }
+  });
+
+  return function spawnDocker(_x6, _x7, _x8) {
+    return _ref5.apply(this, arguments);
   };
 })();
 
@@ -65,7 +105,7 @@ const defaultDockerComposeFile = 'docker/docker-compose.yml';
 const noSyncDockerComposeFile = 'docker/docker-compose-no-sync.yml';
 
 program.version('0.0.6').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
-  var _ref4 = _asyncToGenerator(function* (options) {
+  var _ref6 = _asyncToGenerator(function* (options) {
     let cmd;
     if (options.sync) {
       cmd = yield spawnDC(['-f', defaultDockerComposeFile, 'up'], undefined, false);
@@ -85,8 +125,8 @@ program.version('0.0.6').command('serve').alias('server').alias('s').option('-n,
     process.on('SIGINT', exitHandler.bind(null));
   });
 
-  return function (_x5) {
-    return _ref4.apply(this, arguments);
+  return function (_x9) {
+    return _ref6.apply(this, arguments);
   };
 })());
 
@@ -96,6 +136,11 @@ program.command('kill').alias('k').description('Kill all containers').action(() 
 
 program.command('console').alias('c').description('Starts a rails console on the web container').action(_asyncToGenerator(function* () {
   spawnDC(['-f', defaultDockerComposeFile, 'exec', 'web', 'rails', 'c'], 'web');
+}));
+
+program.command('pry').description('Attach to the web container to use pry').action(_asyncToGenerator(function* () {
+  const containerId = yield containerIdForNname('web');
+  spawnDocker(['attach', containerId], 'web');
 }));
 
 program.command('bash').alias('b').description('Starts a bash shell in the container. Defaults to web container.').option('-c, --container <container>', 'The container to connect to.').action(options => {
@@ -161,6 +206,8 @@ program.on('--help', function () {
   console.log('    $ is rake test');
   console.log('    $ is rake db:rollback');
   console.log('    $ is wipe');
+  console.log('    $ is tail');
+  console.log('    $ is tail xero');
   console.log('');
 });
 
