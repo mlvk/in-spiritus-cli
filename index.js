@@ -141,6 +141,9 @@ program.command('console').alias('c').description('Starts a rails console on the
 program.command('pry').description('Attach to the web container to use pry').action(_asyncToGenerator(function* () {
   const containerId = yield containerIdForNname('web');
   spawnDocker(['attach', containerId], 'web');
+  if (containerId !== '') {
+    console.log(chalk.green('Attached and ready to pry'));
+  }
 }));
 
 program.command('bash').alias('b').description('Starts a bash shell in the container. Defaults to web container.').option('-c, --container <container>', 'The container to connect to.').action(options => {
