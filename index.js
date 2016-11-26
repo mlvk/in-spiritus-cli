@@ -2,20 +2,20 @@
 
 "use strict";
 
-let containerIdForNname = (() => {
+let containerIdForName = (() => {
   var _ref = _asyncToGenerator(function* (name) {
     const cmd = yield exec(`docker ps -q -f name=${ name }`);
     return cmd.stdout.trim();
   });
 
-  return function containerIdForNname(_x) {
+  return function containerIdForName(_x) {
     return _ref.apply(this, arguments);
   };
 })();
 
 let containerIsRunning = (() => {
   var _ref2 = _asyncToGenerator(function* (name) {
-    const containerId = yield containerIdForNname(name);
+    const containerId = yield containerIdForName(name);
     return containerId !== '';
   });
 
@@ -36,6 +36,26 @@ let hasDockerComposeFiles = (() => {
 
 let spawnDC = (() => {
   var _ref4 = _asyncToGenerator(function* (args, container, requireRunning = true) {
+    return run(spawn, args, container, requireRunning);
+  });
+
+  return function spawnDC(_x3, _x4, _x5) {
+    return _ref4.apply(this, arguments);
+  };
+})();
+
+let execDC = (() => {
+  var _ref5 = _asyncToGenerator(function* (args, container, requireRunning = true) {
+    return run(exec, args, container, requireRunning);
+  });
+
+  return function execDC(_x6, _x7, _x8) {
+    return _ref5.apply(this, arguments);
+  };
+})();
+
+let run = (() => {
+  var _ref6 = _asyncToGenerator(function* (func, args, container, requireRunning = true) {
     const isValid = yield hasDockerComposeFiles();
 
     if (!isValid) {
@@ -50,7 +70,7 @@ let spawnDC = (() => {
       if (isRunning) {
         console.log(chalk.green('Executing on', container));
       }
-      return spawn('docker-compose', args, { stdio: 'inherit' });
+      return func('docker-compose', args, { stdio: 'inherit' });
     } else {
       console.log(chalk.yellow(`The ${ container } container does not seem to be running. Try to serve and then try again.`), chalk.green('$ is serve'));
       console.log(chalk.yellow('Run', chalk.green('$ is --help'), 'for more info'));
@@ -58,13 +78,13 @@ let spawnDC = (() => {
     }
   });
 
-  return function spawnDC(_x3, _x4, _x5) {
-    return _ref4.apply(this, arguments);
+  return function run(_x9, _x10, _x11, _x12) {
+    return _ref6.apply(this, arguments);
   };
 })();
 
 let spawnDocker = (() => {
-  var _ref5 = _asyncToGenerator(function* (args, container, requireRunning = true) {
+  var _ref7 = _asyncToGenerator(function* (args, container, requireRunning = true) {
     const isValid = yield hasDockerComposeFiles();
 
     if (!isValid) {
@@ -87,25 +107,27 @@ let spawnDocker = (() => {
     }
   });
 
-  return function spawnDocker(_x6, _x7, _x8) {
-    return _ref5.apply(this, arguments);
+  return function spawnDocker(_x13, _x14, _x15) {
+    return _ref7.apply(this, arguments);
   };
 })();
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { return step("next", value); }, function (err) { return step("throw", err); }); } } return step("next"); }); }; }
 
+const fs = require('fs');
 const fsp = require('fs-promise');
 const chalk = require('chalk');
 const program = require('commander');
 const exec = require('child-process-promise').exec;
 const spawn = require('child_process').spawn;
 const fp = require('lodash/fp');
+const moment = require('moment');
 
 const defaultDockerComposeFile = 'docker/docker-compose.yml';
 const noSyncDockerComposeFile = 'docker/docker-compose-no-sync.yml';
 
 program.version('0.0.6').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
-  var _ref6 = _asyncToGenerator(function* (options) {
+  var _ref8 = _asyncToGenerator(function* (options) {
     let cmd;
     if (options.sync) {
       cmd = yield spawnDC(['-f', defaultDockerComposeFile, 'up'], undefined, false);
@@ -125,8 +147,8 @@ program.version('0.0.6').command('serve').alias('server').alias('s').option('-n,
     process.on('SIGINT', exitHandler.bind(null));
   });
 
-  return function (_x9) {
-    return _ref6.apply(this, arguments);
+  return function (_x16) {
+    return _ref8.apply(this, arguments);
   };
 })());
 
@@ -138,12 +160,14 @@ program.command('console').alias('c').description('Starts a rails console on the
   spawnDC(['-f', defaultDockerComposeFile, 'exec', 'web', 'rails', 'c'], 'web');
 }));
 
+program.command('zeus [options...]').description('Run zeus commands on the zeus container. *Note, flags are not allowed.').action(options => {
+  const args = fp.flattenDeep([['-f', defaultDockerComposeFile, 'exec', 'zeus', 'zeus'], options]);
+  spawnDC(args, 'zeus');
+});
+
 program.command('pry').description('Attach to the web container to use pry').action(_asyncToGenerator(function* () {
-  const containerId = yield containerIdForNname('web');
+  const containerId = yield containerIdForName('web');
   spawnDocker(['attach', containerId], 'web');
-  if (containerId !== '') {
-    console.log(chalk.green('Attached and ready to pry'));
-  }
 }));
 
 program.command('bash').alias('b').description('Starts a bash shell in the container. Defaults to web container.').option('-c, --container <container>', 'The container to connect to.').action(options => {
@@ -162,6 +186,51 @@ program.command('tail [log]').description('Tail logs. Defaults to web container.
 program.command('psql').description('Starts a psql session on the db contianer').action(() => {
   spawnDC(['-f', defaultDockerComposeFile, 'exec', 'db', 'psql', '-U', 'postgres'], 'db');
 });
+
+program.command('stellar [options...]').description('Run stellar commands on the python container. *Note, flags are not allowed. For full use of the stellar command, open a shell using is bash').action(options => {
+  const args = fp.flattenDeep([['-f', defaultDockerComposeFile, 'exec', 'python', 'stellar'], options]);
+  spawnDC(args, 'python');
+});
+
+program.command('snapshot [filename]').description('Create a snapshot of the dev db').action((() => {
+  var _ref11 = _asyncToGenerator(function* (name) {
+    name = name || `in-spiritus-${ moment().unix() }`;
+
+    const cmd = yield spawnDC(['-f', defaultDockerComposeFile, 'exec', '-T', 'python', 'stellar', 'snapshot', name], 'python');
+
+    cmd.on('close', function () {
+      console.log(chalk.yellow('Created new snapshot:'), chalk.red(name));
+      console.log(chalk.yellow('To restore run:'), chalk.red(`is restore ${ name }`));
+    });
+  });
+
+  return function (_x17) {
+    return _ref11.apply(this, arguments);
+  };
+})());
+
+program.command('restore [name]').description('Restore in_spiritus db to specified snapshot').action((() => {
+  var _ref12 = _asyncToGenerator(function* (name) {
+    if (!name) {
+      console.log(chalk.red('You must specify a name'));
+      process.exit(1);
+      return;
+    }
+
+    console.log(chalk.yellow('Restoring in_spiritus db to:'), chalk.red(name));
+    console.log(chalk.yellow('This may take awhile'));
+
+    const cmd = yield spawnDC(['-f', defaultDockerComposeFile, 'exec', 'python', 'stellar', 'restore', name], 'python');
+
+    cmd.on('close', function () {
+      console.log(chalk.green('DB in_spiritus has been restored from snapshot:'), chalk.red(name));
+    });
+  });
+
+  return function (_x18) {
+    return _ref12.apply(this, arguments);
+  };
+})());
 
 program.command('migrate').description('Runs pending db migrations').action(() => {
   spawnDC(['-f', defaultDockerComposeFile, 'exec', 'web', 'rake', 'db:migrate'], 'web');
@@ -204,6 +273,8 @@ program.on('--help', function () {
   console.log('    $ is console');
   console.log('    $ is c');
   console.log('    $ is reset');
+  console.log('    $ is snapshot MY_SNAPSHOT');
+  console.log('    $ is restore MY_SNAPSHOT');
   console.log('    $ is kill');
   console.log('    $ is rails g model Post title description date:datetime');
   console.log('    $ is rake test');

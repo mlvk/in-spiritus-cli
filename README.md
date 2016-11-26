@@ -22,6 +22,11 @@ It manages starting and stopping of containers, and provides some simple shortcu
 1. `is rake [options]` - Run rake commands
 1. `is tail [log]` - Tail a log file with -f, defaults to the development log
 
+### Dumping the db
+You can create a snapshot for quick rollback during dev by running: `is dump backup.dump`
+This will generate a dump file in `tmp/db/pg/dumps/` which is a shared volume on the db container
+To restore simply run: `is restore backup.dump`
+
 ### Using pry
 To enter a pry debugging session, you can set `binding.pry` as usual in your code.
 Then open a new terminal and navigate to the project root.
