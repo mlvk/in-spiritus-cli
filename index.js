@@ -128,19 +128,24 @@ const noSyncDockerComposeFile = 'docker/docker-compose-no-sync.yml';
 
 program.version('0.0.6').command('serve').alias('server').alias('s').option('-n, --no-sync', "Don't start the syncing containers, sidekiq and worker").description('Start all docker containers').action((() => {
   var _ref8 = _asyncToGenerator(function* (options) {
+
     let cmd;
     if (options.sync) {
+      console.log(chalk.green('Starting services with sync enabled'));
       cmd = yield spawnDC(['-f', defaultDockerComposeFile, 'up'], undefined, false);
     } else {
+      console.log(chalk.green('Starting services with sync disabled'));
       cmd = yield spawnDC(['-f', noSyncDockerComposeFile, 'up'], undefined, false);
     }
 
     process.on('close', function () {
+      console.log(chalk.green('All containers shutdown'));
       process.exit(1);
     });
 
     function exitHandler(options, err) {
-      cmd.kill('SIGINT');
+      console.log(chalk.green('Waiting for containers to shutdown gracefully...'));
+      spawnDC(['-f', defaultDockerComposeFile, 'stop'], undefined, false);
     }
 
     process.on('exit', exitHandler.bind(null));
